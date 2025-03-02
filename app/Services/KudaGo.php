@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Integration\Services;
+namespace App\Services;
 
 use App\Tools\HTTPClient;
 
@@ -12,7 +12,7 @@ class KudaGo
         'events' => 'events/',
     ];
 
-    public static function get()
+    public static function getEvents(string $location = 'msk', array $params = []): array
     {
 
       $client = new HTTPClient(self::API_URL, 5.0);
@@ -21,17 +21,22 @@ class KudaGo
           'Accept' => 'application/json',
       ];
 
+      $fields = ['id','location', 'description', 'place', 'title'];
+      
+      if ($params) {
+        $fields = array_merge($params, $fields);
+      }
+
       $query = [
-          'fields' => 'location,dates,place,age_restriction,images,short_title,title',
+          'fields' => implode(',', $fields),
           'expand' => 'location',
-          'location' => 'msk',
-          'page_size' => 20,
+          'location' => $location,
+          'page_size' => 5,
           'order_by' => '-publication_date'
       ];
 
       $info = $client->get($query, $headers, self::ENDPOINTS['events']);
 
-    //   echo '<pre>';
-    //   var_dump(EventFormatter::prepare($info['results']));
+      return $info ?? [];
     }
 }
