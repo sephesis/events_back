@@ -11,7 +11,7 @@ class EventResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
+            'title' => htmlspecialchars_decode(strip_tags($this->title)) ?? '',
             'short_title' => $this->short_title ?? '',
             'location' => $this->location,
            // 'age_restriction' => $this->age_restriction && (int) $this->age_restriction > 0 ? $this->age_restriction : '',
