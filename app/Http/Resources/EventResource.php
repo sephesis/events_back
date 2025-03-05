@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 class EventResource extends JsonResource
 {
@@ -14,11 +15,11 @@ class EventResource extends JsonResource
             'title' => htmlspecialchars_decode(strip_tags($this->title)) ?? '',
             'short_title' => $this->short_title ?? '',
             'location' => $this->location,
-           // 'age_restriction' => $this->age_restriction && (int) $this->age_restriction > 0 ? $this->age_restriction : '',
-           // 'place' => $this->place,
-            'images' => $this->images ?? [],
+            'age_restriction' => isset($this->age_restriction) ? $this->age_restriction : '',
+            //'place' => $this->place,
+            'images' => isset($this->images) ? array_values($this->images) : [],
             //'dates' => $this->dates,
-            'description' => $this->description ?? '',
+            'description' => isset($this->description) ? strip_tags($this->description) : '',
         ];
     }
 }
