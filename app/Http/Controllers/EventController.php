@@ -27,6 +27,7 @@ class EventController extends Controller
         }, $standardizedArray);
 
 
+      
         return response()->json(['events' => EventResource::collection($eventObjects)]);
     }
 }

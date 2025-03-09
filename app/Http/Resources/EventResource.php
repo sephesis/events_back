@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Utils\ImageFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,7 @@ class EventResource extends JsonResource
             'location' => $this->location,
             'age_restriction' => isset($this->age_restriction) ? $this->age_restriction : '',
             //'place' => $this->place,
-            'images' => isset($this->images) ? array_values($this->images) : [],
+            'images' => isset($this->images) ? ImageFormatter::prepare($this->images) : ['https://dummyimage.com/350'],
             //'dates' => $this->dates,
             'description' => isset($this->description) ? strip_tags($this->description) : '',
         ];
