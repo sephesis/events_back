@@ -6,14 +6,23 @@ use App\Http\Resources\EventResource;
 use App\Services\Timepad;
 use App\Services\KudaGo;
 use App\Utils\ArrayMapper;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $kG = KudaGo::getEvents('msk', ['age_restriction', 'images', 'short_title', 'dates']);
+        $city = '';
+        
+        if ($request->get('city')) {
+            $city = \App\Models\City::CITIES_MAP_KG[$request->get('city')];
+        }
+        $kG = KudaGo::getEvents($city, ['age_restriction', 'images', 'short_title', 'dates']);
 
-        $timepad = Timepad::getEvents();
+        if ($request->get('city')) {
+            $city = \App\Models\City::CITIES_MAP_TIMEPAD[$request->get('city')];
+        }
+        $timepad = Timepad::getEvents($city);
 
         $mappingFilePath = resource_path('mapping/events_key_mapping.json');
         $arrayMapper = new ArrayMapper($mappingFilePath);

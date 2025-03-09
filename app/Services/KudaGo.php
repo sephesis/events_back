@@ -12,7 +12,7 @@ class KudaGo
         'events' => 'events/',
     ];
 
-    public static function getEvents(string $location = 'msk', array $params = []): array
+    public static function getEvents(string $city = 'msk', array $params = []): array
     {
 
       $client = new HTTPClient(self::API_URL, 5.0);
@@ -30,7 +30,7 @@ class KudaGo
       $query = [
           'fields' => implode(',', $fields),
           'expand' => 'location',
-          'location' => $location,
+          'location' => $city,
           'page_size' => 5,
           'order_by' => '-publication_date'
       ];
