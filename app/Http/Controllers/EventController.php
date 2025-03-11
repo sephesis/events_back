@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\EventResource;
+use App\Models\Category;
 use App\Services\Timepad;
 use App\Services\KudaGo;
 use App\Utils\ArrayMapper;
@@ -17,19 +18,19 @@ class EventController extends Controller
         if ($request->get('city')) {
             $city = \App\Models\City::CITIES_MAP_KG[$request->get('city')];
         }
-        $kG = KudaGo::getEvents($city, ['age_restriction', 'images', 'short_title', 'dates']);
-
-        if ($request->get('city')) {
-            $city = \App\Models\City::CITIES_MAP_TIMEPAD[$request->get('city')];
+        if ($request->get('areas')) {
+            $exploded = explode(',', $request->get('areas'));
+            foreach ($exploded as $ex) {
+                $areas[] = (int) trim(Category::CATEGORY_MAP_KG[$ex]);
+            }
         }
-        $timepad = Timepad::getEvents($city);
+
+        $events = KudaGo::getEvents($city, ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free'], []);
 
         $mappingFilePath = resource_path('mapping/events_key_mapping.json');
         $arrayMapper = new ArrayMapper($mappingFilePath);
 
-        $events = array_merge($timepad['values'], $kG['results']);
-
-        $standardizedArray = $arrayMapper->standardizeMultiDimensionalArray($events);
+        $standardizedArray = $arrayMapper->standardizeMultiDimensionalArray($events['results']);
 
         $eventObjects = array_map(function ($event) {
             return (object) $event;
