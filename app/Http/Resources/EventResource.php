@@ -18,9 +18,10 @@ class EventResource extends JsonResource
             'location' => $this->location,
             'age_restriction' => isset($this->age_restriction) && (int) $this->age_restriction > 0 ? $this->age_restriction : '',
             'place' => $this->place,
-            'images' => isset($this->images) ? ImageFormatter::prepare($this->images) : ['https://dummyimage.com/350'],
+            'images' => isset($this->images) ? ImageFormatter::prepare($this->images) : [asset('storage/public/images/dummies/event_dumm.jpg')],
             //'dates' => $this->dates,
             'description' => isset($this->description) ? strip_tags($this->description) : '',
+            'link' => '#',
         ];
     }
 }
