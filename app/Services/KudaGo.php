@@ -10,6 +10,7 @@ class KudaGo
 
   private const ENDPOINTS = [
     'events' => 'events/',
+    'categories' => 'event-categories/',
   ];
 
   public static function getEvents(string $city = 'msk', array $params = [], array $placeIds = []): array
@@ -38,9 +39,25 @@ class KudaGo
       $query['place_id'] = implode(',', $placeIds);
     }
 
-  
     $info = $client->get($query, $headers, self::ENDPOINTS['events']);
-   
+
     return $info ?? [];
+  }
+
+  public static function getCategories($lang = 'ru')
+  {
+    $client = new HTTPClient(self::API_URL, 5.0);
+
+    $headers = [
+      'Accept' => 'application/json',
+    ];
+
+    $query = [
+      'lang' => $lang,
+    ];
+
+    $cats = $client->get($query, $headers, self::ENDPOINTS['categories']);
+
+    return $cats ?? [];
   }
 }

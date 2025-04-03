@@ -13,9 +13,7 @@ use App\Http\Requests\Event\StoreRequest;
 class EventController extends Controller
 {
     public function index(StoreRequest $request)
-    {
-        $city = '';
-        
+    {    
         if ($request->get('city')) {
             $city = \App\Models\City::CITIES_MAP_KG[$request->get('city')];
         }
