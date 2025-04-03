@@ -8,10 +8,11 @@ use App\Services\Timepad;
 use App\Services\KudaGo;
 use App\Utils\ArrayMapper;
 use Illuminate\Http\Request;
+use App\Http\Requests\Event\StoreRequest;
 
 class EventController extends Controller
 {
-    public function index(Request $request)
+    public function index(StoreRequest $request)
     {
         $city = '';
         
@@ -36,8 +37,6 @@ class EventController extends Controller
             return (object) $event;
         }, $standardizedArray);
 
-
-      
         return response()->json(['events' => EventResource::collection($eventObjects)]);
     }
 }
