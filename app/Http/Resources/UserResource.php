@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Utils\ImageFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
@@ -13,8 +12,9 @@ class CategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'slug' => $this->slug,
+            'created_at' => $this->created_at->format('d.m.Y H:i'),
             'name' => $this->name,
+            'email' => $this->email,
         ];
     }
 }

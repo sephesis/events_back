@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class EventResource extends JsonResource
 {
-    public function toArray(Request $request)
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
@@ -20,7 +20,9 @@ class EventResource extends JsonResource
             'place' => $this->place,
             'images' => isset($this->images) ? ImageFormatter::prepare($this->images) : [asset('storage/public/images/dummies/event_dumm.jpg')],
             //'dates' => $this->dates,
+            'tagline' => isset($this->tagline) ? strip_tags($this->tagline) : '',
             'description' => isset($this->description) ? strip_tags($this->description) : '',
+            'is_free' => (bool) $this->is_free,
             'link' => '#',
         ];
     }

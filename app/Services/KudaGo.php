@@ -21,7 +21,7 @@ class KudaGo
       'Accept' => 'application/json',
     ];
 
-    $fields = ['id', 'location', 'description', 'place', 'title', 'categories'];
+    $fields = ['id', 'tagline', 'location', 'description', 'place', 'title', 'categories'];
 
     if ($params) {
       $fields = array_merge($params, $fields);
