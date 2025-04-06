@@ -17,14 +17,8 @@ class EventController extends Controller
         if ($request->get('city')) {
             $city = \App\Models\City::CITIES_MAP_KG[$request->get('city')];
         }
-        if ($request->get('areas')) {
-            $exploded = explode(',', $request->get('areas'));
-            foreach ($exploded as $ex) {
-                $areas[] = (int) trim(Category::CATEGORY_MAP_KG[$ex]);
-            }
-        }
 
-        $events = KudaGo::getEvents($city, ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free'], []);
+        $events = KudaGo::getEvents($city, $request->get('areas'), ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free']);
 
         $mappingFilePath = resource_path('mapping/events_key_mapping.json');
         $arrayMapper = new ArrayMapper($mappingFilePath);

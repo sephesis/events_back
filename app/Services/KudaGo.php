@@ -13,7 +13,7 @@ class KudaGo
     'categories' => 'event-categories/',
   ];
 
-  public static function getEvents(string $city = 'msk', array $params = [], array $placeIds = []): array
+  public static function getEvents(string $city = 'msk', string $categories, array $params = []): array
   {
     $client = new HTTPClient(self::API_URL, 5.0);
 
@@ -35,8 +35,8 @@ class KudaGo
       'lang' => 'ru',
     ];
 
-    if ($placeIds) {
-      $query['place_id'] = implode(',', $placeIds);
+    if ($categories) {
+      $query['categories'] = $categories;
     }
 
     $info = $client->get($query, $headers, self::ENDPOINTS['events']);
