@@ -2,36 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Event\StoreRequest;
+use App\Http\Requests\Event\IndexRequest;
 use App\Http\Resources\EventResource;
 use App\Models\City;
-use App\Services\EventCacheService;
-use App\Services\KudaGo;
+use App\Models\Event;
+use App\Services\EventSourceService;
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
-    public function __construct(private readonly EventCacheService $eventCache)
+    public function __construct(private readonly EventSourceService $source)
     {
     }
 
-    public function index(StoreRequest $request)
+    public function index(IndexRequest $request): JsonResponse
     {
-        $cityCode = $request->get('city');
+        $cityCode = $request->validated('city');
 
         if (! isset(City::CITIES_MAP_KG[$cityCode])) {
             return response()->json(['message' => 'Неизвестный город.'], 422);
         }
 
-        $citySlug = City::CITIES_MAP_KG[$cityCode];
+        $result = $this->source->search([
+            'city_code' => $cityCode,
+            'categories' => $request->categories(),
+            'budget' => $request->budget(),
+            'date' => $request->validated('date'),
+            'q' => $request->validated('q'),
+        ]);
 
-        $events = KudaGo::getEvents(
-            $citySlug,
-            (string) $request->get('areas', ''),
-            ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free']
-        );
+        return response()->json([
+            'events' => EventResource::collection($result['events']),
+            'source' => $result['source'],
+        ]);
+    }
 
-        $cachedEvents = $this->eventCache->upsertFromKudaGo($events['results'] ?? [], $cityCode);
-
-        return response()->json(['events' => EventResource::collection($cachedEvents)]);
+    public function show(Event $event): JsonResponse
+    {
+        return response()->json(['event' => new EventResource($event)]);
     }
 }

@@ -3,19 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
-use Illuminate\Http\Request;
-use App\Services\KudaGo;
+use App\Services\EventSourceService;
+use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request)
+    public function index(EventSourceService $source): JsonResponse
     {
-        $categories = KudaGo::getCategories();
+        $categories = array_map(fn (array $category) => (object) $category, $source->categories());
 
-        $cats = array_map(function ($category) {
-            return (object) $category;
-        }, $categories);
-        
-        return response()->json(['categories' => CategoryResource::collection($cats)]);
+        return response()->json(['categories' => CategoryResource::collection($categories)]);
     }
 }

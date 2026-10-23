@@ -30,6 +30,7 @@ class EventCacheService
         // event has no specific place (e.g. an online event).
         [$lat, $lng] = $this->normalizeCoords($place['coords'] ?? ($raw['location']['coords'] ?? []));
         [$priceMin, $priceMax] = $this->parsePrice($raw['price'] ?? null);
+        [$startsAt, $endsAt] = $this->pickDates($raw['dates'] ?? []);
 
         return Event::updateOrCreate(
             [
@@ -52,6 +53,8 @@ class EventCacheService
                 'is_free' => (bool) ($raw['is_free'] ?? false),
                 'age_restriction' => $raw['age_restriction'] ?? null,
                 'images' => $raw['images'] ?? [],
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
                 'raw_payload' => $raw,
                 'fetched_at' => $fetchedAt,
             ]
@@ -78,6 +81,40 @@ class EventCacheService
         }
 
         return $a > $b ? [$a, $b] : [$b, $a];
+    }
+
+    /**
+     * KudaGo отдаёт массив сеансов {start, end} в unix-времени; берём
+     * ближайший ещё не закончившийся. Для постоянных событий KudaGo
+     * подставляет «бесконечные» даты (отрицательные/огромные) — их отбрасываем.
+     *
+     * @return array{0: ?\Illuminate\Support\Carbon, 1: ?\Illuminate\Support\Carbon}
+     */
+    private function pickDates(array $dates): array
+    {
+        $valid = fn ($ts) => is_numeric($ts) && $ts > 0 && $ts < 4102444800; // < 2100 года
+        $now = time();
+        $chosen = null;
+
+        foreach ($dates as $date) {
+            $end = $date['end'] ?? null;
+
+            if ($valid($end) && $end < $now) {
+                continue;
+            }
+
+            $chosen = $date;
+            break;
+        }
+
+        $chosen ??= end($dates) ?: [];
+        $start = $chosen['start'] ?? null;
+        $end = $chosen['end'] ?? null;
+
+        return [
+            $valid($start) ? \Illuminate\Support\Carbon::createFromTimestamp($start, config('app.timezone')) : null,
+            $valid($end) ? \Illuminate\Support\Carbon::createFromTimestamp($end, config('app.timezone')) : null,
+        ];
     }
 
     /**

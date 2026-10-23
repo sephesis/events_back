@@ -31,6 +31,9 @@ class Event extends Model
         'images',
         'starts_at',
         'ends_at',
+        'opens_at',
+        'closes_at',
+        'duration_min',
         'raw_payload',
         'fetched_at',
     ];
@@ -59,6 +62,47 @@ class Event extends Model
     public function hasCoordinates(): bool
     {
         return $this->lat !== null && $this->lng !== null;
+    }
+
+    /**
+     * Описание категории из config/recommender.php: name, kind, duration.
+     */
+    public function categoryMeta(): array
+    {
+        return config('recommender.categories.' . $this->category_group)
+            ?? config('recommender.default_category');
+    }
+
+    /** fixed — начало в конкретное время; open — в любое время работы. */
+    public function isFixedTime(): bool
+    {
+        return $this->categoryMeta()['kind'] === 'fixed' && $this->starts_at !== null;
+    }
+
+    public function visitDurationMinutes(): int
+    {
+        if ($this->duration_min) {
+            return (int) $this->duration_min;
+        }
+
+        if ($this->isFixedTime() && $this->ends_at && $this->starts_at->isSameDay($this->ends_at)) {
+            $minutes = (int) $this->starts_at->diffInMinutes($this->ends_at);
+
+            if ($minutes > 0) {
+                return $minutes;
+            }
+        }
+
+        return (int) $this->categoryMeta()['duration'];
+    }
+
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereNull('ends_at')->where(function (Builder $q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '>=', now()->startOfDay());
+            })->orWhere('ends_at', '>=', now());
+        });
     }
 
     public function scopeForCity(Builder $query, string $cityCode): Builder
