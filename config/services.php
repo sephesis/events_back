@@ -24,6 +24,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'timepad' => [
+        'token' => env('TIMEPAD_TOKEN'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],
