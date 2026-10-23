@@ -13,6 +13,9 @@ namespace App\Services\Routing;
  * Поэтому в каждом состоянии хранится Парето-множество меток
  * (расстояние, время окончания) — оба критерия «чем меньше, тем лучше».
  *
+ * Первый критерий — расстояние плюс небольшой штраф за ожидание
+ * (wait_penalty_km_per_min), чтобы не предлагать маршруты с часами простоя.
+ *
  * Сложность по-прежнему O(n²·2ⁿ·L), где L — размер Парето-множества
  * (ограничен LABEL_CAP), поэтому метод применяется до ~12 точек.
  *
@@ -40,6 +43,7 @@ class HeldKarpSolver
 
         $dist = $matrix['distance'];
         $dur = $matrix['duration'];
+        $waitPenalty = (float) config('recommender.routing.wait_penalty_km_per_min', 0.0);
         // labels[mask][j] = list of [distance, finish, prevJ, prevLabelIdx]
         $labels = [];
 
@@ -90,7 +94,8 @@ class HeldKarpSolver
                     $next = $mask | (1 << $k);
 
                     foreach ($list as $li => [$d, $finish]) {
-                        $start = max($finish + $dur[$gj][$gk], $pk->earliest);
+                        $arrival = $finish + $dur[$gj][$gk];
+                        $start = max($arrival, $pk->earliest);
 
                         if ($start > $pk->latest) {
                             continue;
@@ -102,7 +107,8 @@ class HeldKarpSolver
                             continue;
                         }
 
-                        $this->insertLabel($labels[$next][$k], [$d + $dist[$gj][$gk], $newFinish, $j, $li]);
+                        $cost = $d + $dist[$gj][$gk] + $waitPenalty * ($start - $arrival);
+                        $this->insertLabel($labels[$next][$k], [$cost, $newFinish, $j, $li]);
                     }
                 }
             }

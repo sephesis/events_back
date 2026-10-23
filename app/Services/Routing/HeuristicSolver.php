@@ -177,11 +177,17 @@ class HeuristicSolver
         return $order;
     }
 
-    /** Целевая функция: суммарное расстояние; недопустимые по времени — INF. */
+    /** Целевая функция: расстояние + штраф за ожидание; недопустимые по времени — INF. */
     private function cost(array $points, array $matrix, array $order, ?int $startIdx, ?int $endTime, bool $returnToStart): float
     {
         $eval = $this->evaluator->evaluate($points, $matrix, $order, $startIdx, $endTime, $returnToStart);
 
-        return $eval['feasible'] ? $eval['distance'] : INF;
+        if (! $eval['feasible']) {
+            return INF;
+        }
+
+        $wait = array_sum(array_column($eval['schedule'], 'wait_min'));
+
+        return $eval['distance'] + (float) config('recommender.routing.wait_penalty_km_per_min', 0.0) * $wait;
     }
 }

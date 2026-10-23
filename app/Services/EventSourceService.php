@@ -72,10 +72,12 @@ class EventSourceService
                 ->orWhere('description', 'like', $term));
         }
 
+        // Сначала ближайшие события с датой начала, затем выставки и места.
         $events = $query
-            ->orderByRaw('starts_at IS NULL')
+            ->orderByRaw('CASE WHEN starts_at >= ? THEN 0 ELSE 1 END', [now()->startOfDay()])
             ->orderBy('starts_at')
-            ->limit($filters['limit'] ?? 60)
+            ->orderBy('id')
+            ->limit($filters['limit'] ?? 120)
             ->get();
 
         return ['events' => $events, 'source' => $source];
