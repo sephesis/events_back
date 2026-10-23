@@ -1,66 +1,62 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Досуг — API (Laravel 12 + Sail)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Бэкенд рекомендательной системы для планирования персонализированных маршрутов
+(прототип к ВКР). Фронтенд — репозиторий `events_front`.
 
-## About Laravel
+## Запуск
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```bash
+cp .env.example .env            # порты уже сдвинуты: 8080 занят другими проектами
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html \
+  laravelsail/php84-composer:latest composer install --ignore-platform-reqs
+./vendor/bin/sail up -d mysql redis mailpit laravel.test
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate --seed   # пользователи + демо-набор мероприятий
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Сервис | Порт хоста |
+|---|---|
+| API | http://localhost:8081 (`/up` — health) |
+| MySQL | 3307 |
+| Redis | 6380 |
+| Mailpit | 8026 |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Тестовые пользователи: `admin@admin.com` / `admin@admin.com`, `simple@simple.com` / `simple@simple.com`.
 
-## Learning Laravel
+Тесты: `./vendor/bin/sail artisan test`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Данные
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Основной источник — KudaGo API. Если он недоступен (сейчас отвечает 403 с этой сети),
+используется демо-набор (`source = demo`): реальные площадки Москвы и Петербурга,
+сгенерированные мероприятия на 14 дней вперёд и синтетические пользователи
+(`*@demo.local`), из маршрутов которых строится общая матрица цепи Маркова.
+Даты демо-событий сдвигаются командой `./vendor/bin/sail artisan demo:refresh`.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Алгоритмы (глава 1 ВКР)
 
-## Laravel Sponsors
+| Задача | Реализация |
+|---|---|
+| Рекомендация следующей точки | `Recommendation/MarkovChainService` — цепь Маркова 1-го порядка над категориями, сглаживание Лапласа, затухание по давности, смешивание личной и общей матриц `λᵢ = nᵢ/(nᵢ+β)` |
+| Итоговая оценка | `RecommendationService` — `Score(e,u) = w1·P_M + w2·S_I + w3·S_D + w4·S_T + w5·S_B`; S_I включает item-based CF (R_user гибридной модели) |
+| Матрица затрат | `Routing/DistanceMatrixService` — OSRM `/table` (пешеходный граф OSM), фолбэк haversine ×1.3 |
+| Порядок посещения | `Routing/HeldKarpSolver` (точно, ≤ 12 точек, временные окна, необязательные точки), `Routing/HeuristicSolver` (ближайший сосед + 2-opt + Or-opt) |
+| Двухэтапный конвейер | `ItineraryPlanner` — история → Марков → Score → проверка допустимости → оптимизация |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Веса и параметры — `config/recommender.php`.
 
-### Premium Partners
+## API (`/api/v1`)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `events?city=&categories=&date=&budget=&q=` | мероприятия (KudaGo / демо) |
+| GET | `events/{id}`, `categories` | карточка, справочник категорий |
+| POST | `recommendations` | ранжирование по Score с разбивкой и объяснениями (токен — необязателен) |
+| GET | `recommendations/model` | матрица переходов цепи Маркова |
+| POST | `itineraries/build` | оптимальный порядок для выбранных точек |
+| POST | `itineraries/plan` | автоматический персональный маршрут |
+| POST | `route-line` | линия маршрута по улицам (OSRM) |
+| auth | `auth/register`, `auth/login`, `auth/logout`, `auth/me` | Sanctum-токены |
+| auth | `itineraries` (CRUD), `itineraries/recommendations` | сохранённые маршруты |
+| auth | `interactions` | журнал действий для модели |
+| auth | `profile` (GET/PUT/DELETE), `profile/history` (DELETE) | интересы, бюджет, удаление |
