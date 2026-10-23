@@ -2,33 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\EventResource;
-use App\Models\Category;
-use App\Services\Timepad;
-use App\Services\KudaGo;
-use App\Utils\ArrayMapper;
-use Illuminate\Http\Request;
 use App\Http\Requests\Event\StoreRequest;
+use App\Http\Resources\EventResource;
+use App\Models\City;
+use App\Services\EventCacheService;
+use App\Services\KudaGo;
 
 class EventController extends Controller
 {
+    public function __construct(private readonly EventCacheService $eventCache)
+    {
+    }
+
     public function index(StoreRequest $request)
-    {    
-        if ($request->get('city')) {
-            $city = \App\Models\City::CITIES_MAP_KG[$request->get('city')];
+    {
+        $cityCode = $request->get('city');
+
+        if (! isset(City::CITIES_MAP_KG[$cityCode])) {
+            return response()->json(['message' => 'Неизвестный город.'], 422);
         }
 
-        $events = KudaGo::getEvents($city, $request->get('areas'), ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free']);
+        $citySlug = City::CITIES_MAP_KG[$cityCode];
 
-        $mappingFilePath = resource_path('mapping/events_key_mapping.json');
-        $arrayMapper = new ArrayMapper($mappingFilePath);
+        $events = KudaGo::getEvents(
+            $citySlug,
+            (string) $request->get('areas', ''),
+            ['age_restriction', 'images', 'short_title', 'dates', 'price', 'is_free']
+        );
 
-        $standardizedArray = $arrayMapper->standardizeMultiDimensionalArray($events['results']);
+        $cachedEvents = $this->eventCache->upsertFromKudaGo($events['results'] ?? [], $cityCode);
 
-        $eventObjects = array_map(function ($event) {
-            return (object) $event;
-        }, $standardizedArray);
-
-        return response()->json(['events' => EventResource::collection($eventObjects)]);
+        return response()->json(['events' => EventResource::collection($cachedEvents)]);
     }
 }

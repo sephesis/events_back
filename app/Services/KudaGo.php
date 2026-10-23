@@ -29,7 +29,9 @@ class KudaGo
 
     $query = [
       'fields' => implode(',', $fields),
-      'expand' => 'location',
+      // 'location' alone leaves "place" as a bare {"id": ...} stub with no
+      // coordinates — we need "place" expanded too to get the venue's coords.
+      'expand' => 'location,place',
       'location' => $city,
       'page_size' => 20,
       'lang' => 'ru',
