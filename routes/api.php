@@ -11,6 +11,20 @@ use App\Http\Controllers\RecommendationController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'v1'], function () {
+    // Корень API: статус и список эндпоинтов — чтобы адрес открывался в браузере.
+    Route::get('/', function () {
+        return response()->json([
+            'name' => config('app.name') . ' API',
+            'version' => 'v1',
+            'status' => 'ok',
+            'events_source' => cache()->has('kudago:down') ? 'demo' : 'kudago',
+            'endpoints' => collect(Route::getRoutes())
+                ->filter(fn ($route) => str_starts_with($route->uri(), 'api/v1/'))
+                ->map(fn ($route) => implode('|', array_diff($route->methods(), ['HEAD'])) . ' /' . $route->uri())
+                ->values(),
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    });
+
     Route::get('/events', [EventController::class, 'index']);
     Route::get('/events/{event}', [EventController::class, 'show'])->whereNumber('event');
     Route::get('/categories', [CategoryController::class, 'index']);
