@@ -24,6 +24,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'interests',
+        'default_budget',
+        'home_city_code',
     ];
 
     /**
@@ -46,11 +49,18 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'interests' => 'array',
+            'default_budget' => 'decimal:2',
         ];
     }
 
     public function itineraries(): HasMany
     {
         return $this->hasMany(Itinerary::class);
+    }
+
+    public function interactions(): HasMany
+    {
+        return $this->hasMany(UserInteraction::class);
     }
 }

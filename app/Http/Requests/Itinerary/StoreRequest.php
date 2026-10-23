@@ -17,6 +17,7 @@ class StoreRequest extends FormRequest
             'city_code' => ['required', 'string'],
             'budget' => ['nullable', 'numeric', 'min:0'],
             'title' => ['nullable', 'string', 'max:255'],
+            // Порядок элементов — порядок посещения, сохраняется как есть.
             'event_ids' => ['required', 'array', 'min:1'],
             'event_ids.*' => ['integer', 'distinct', 'exists:events,id'],
         ];

@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Log;
 
 class UserResource extends JsonResource
 {
@@ -15,6 +14,9 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at->format('d.m.Y H:i'),
             'name' => $this->name,
             'email' => $this->email,
+            'interests' => $this->interests ?? [],
+            'default_budget' => $this->default_budget !== null ? (float) $this->default_budget : null,
+            'home_city_code' => $this->home_city_code,
         ];
     }
 }

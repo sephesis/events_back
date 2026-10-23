@@ -1,30 +1,49 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\InteractionController;
+use App\Http\Controllers\ItineraryController;
+use App\Http\Controllers\MapController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecommendationController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'v1'], function () {
-    Route::get('/events', [App\Http\Controllers\EventController::class, 'index']);
-    Route::get('/categories', [App\Http\Controllers\CategoryController::class, 'index']);
-
+    Route::get('/events', [EventController::class, 'index']);
+    Route::get('/events/{event}', [EventController::class, 'show'])->whereNumber('event');
+    Route::get('/categories', [CategoryController::class, 'index']);
 
     Route::prefix('auth')->group(function () {
-        Route::post('register', [App\Http\Controllers\AuthController::class, 'register'])->name('auth.register');
-        Route::post('login', [App\Http\Controllers\AuthController::class, 'login'])->name('auth.login');
+        Route::post('register', [AuthController::class, 'register'])->name('auth.register');
+        Route::post('login', [AuthController::class, 'login'])->name('auth.login');
 
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('auth.logout');
-            Route::get('me', [App\Http\Controllers\AuthController::class, 'me'])->name('auth.me');
+            Route::post('logout', [AuthController::class, 'logout'])->name('auth.logout');
+            Route::get('me', [AuthController::class, 'me'])->name('auth.me');
         });
     });
 
-    Route::post('/itineraries/build', [App\Http\Controllers\ItineraryController::class, 'build']);
-    Route::post('/route-line', [App\Http\Controllers\MapController::class, 'routeLine']);
+    // Доступны гостям; если передан токен — результат персонализируется.
+    Route::post('/itineraries/build', [ItineraryController::class, 'build']);
+    Route::post('/itineraries/plan', [ItineraryController::class, 'plan']);
+    Route::post('/recommendations', [RecommendationController::class, 'recommend']);
+    Route::get('/recommendations/model', [RecommendationController::class, 'model']);
+    Route::post('/route-line', [MapController::class, 'routeLine']);
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/itineraries/recommendations', [App\Http\Controllers\ItineraryController::class, 'recommendations']);
-        Route::get('/itineraries', [App\Http\Controllers\ItineraryController::class, 'index']);
-        Route::post('/itineraries', [App\Http\Controllers\ItineraryController::class, 'store']);
-        Route::get('/itineraries/{itinerary}', [App\Http\Controllers\ItineraryController::class, 'show']);
-        Route::delete('/itineraries/{itinerary}', [App\Http\Controllers\ItineraryController::class, 'destroy']);
+        Route::get('/itineraries/recommendations', [ItineraryController::class, 'recommendations']);
+        Route::get('/itineraries', [ItineraryController::class, 'index']);
+        Route::post('/itineraries', [ItineraryController::class, 'store']);
+        Route::get('/itineraries/{itinerary}', [ItineraryController::class, 'show']);
+        Route::delete('/itineraries/{itinerary}', [ItineraryController::class, 'destroy']);
+
+        Route::post('/interactions', [InteractionController::class, 'store']);
+
+        Route::get('/profile', [ProfileController::class, 'show']);
+        Route::put('/profile', [ProfileController::class, 'update']);
+        Route::delete('/profile/history', [ProfileController::class, 'clearHistory']);
+        Route::delete('/profile', [ProfileController::class, 'destroy']);
     });
 });
